@@ -118,7 +118,7 @@ class Interpolation:
                 h5fu.get("VisualisationVector/"+self.stepstr))
         for dim in xrange(3):
             df.info("Setting u[" + str(dim) + "]")
-            self.set_val(self.u[dim], self.u_data[:, dim], self.x, self.xdict)
+            self._set_val(self.u[dim], self.u_data[:, dim])
 
     def probe(self):
         self.probes.clear()
