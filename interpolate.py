@@ -22,7 +22,7 @@ def get_settings_serial():
     parser = argparse.ArgumentParser(description="Interpolate to points.")
     parser.add_argument('filename_in', type=str,
                         help='name of velocity (HDF5) file')
-    parser.add_argument('pointsfilename', type=str,
+    parser.add_argument('ptsfilename', type=str,
                         help='name of points (txt) file')
     parser.add_argument('folder_out', type=str,
                         help='folder to save to (HDF5)')
