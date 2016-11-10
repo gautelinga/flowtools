@@ -3,9 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
+from mpi4py import MPI
 
 
 def get_settings():
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    if rank == 0:
+        args = get_settings_serial()
+    else:
+        args = None
+    args = comm.bcast(args, root=0)
+    return args
+
+
+def get_settings_serial():
     parser = argparse.ArgumentParser(
         description="Plotting flow in a pipe or duct.")
     parser.add_argument("x_file", type=str,
@@ -21,10 +33,14 @@ def get_settings():
 def main():
     args = get_settings()
 
+    comm = MPI.COMM_WORLD
+    mpi_size = comm.Get_size()
+    mpi_rank = comm.Get_rank()
+    
     nu = 9e-6
     dx = 2
     dt = 150 * 0.2
-    
+
     with h5py.File(args.x_file, "r") as h5f:
         pos = np.array(h5f["x"])
 
@@ -55,13 +71,16 @@ def main():
 
     num_series = args.u_id_stop + 1 - args.u_id_start
 
-    uz_centerline_series = np.zeros((num_series, dims[2]-1))
-    q_series = np.zeros((num_series, dims[2]-1))
-    f_series = np.zeros((num_series, dims[2]-1))
-    u_mean_series = np.zeros((num_series, 3))
+    series_proc = range(args.u_id_start + mpi_rank,
+                        args.u_id_stop+1, mpi_size)
+    num_series_proc = len(series_proc)
 
-    for u_id in xrange(args.u_id_start, args.u_id_stop+1):
-        row_id = u_id - args.u_id_start
+    uz_centerline_series = np.zeros((num_series_proc, dims[2]-1))
+    q_series = np.zeros((num_series_proc, dims[2]-1))
+    f_series = np.zeros((num_series_proc, dims[2]-1))
+    u_mean_series = np.zeros((num_series_proc, 3))
+
+    for row_id, u_id in enumerate(series_proc):
         u_id_str = str(u_id)
         with h5py.File(args.u_folder + "/u_" + u_id_str + ".h5", "r") as h5f:
             vel = np.asarray(h5f["u/" + u_id_str])
@@ -132,12 +151,31 @@ def main():
 
     # plt.show()
 
-    np.savetxt(os.path.join(args.out_folder, "u_mean.dat"),
-               u_mean_series)
-    np.savetxt(os.path.join(args.out_folder, "uz_centerline.dat"),
-               uz_centerline_series)
-    np.savetxt(os.path.join(args.out_folder, "q.dat"), q_series)
-    np.savetxt(os.path.join(args.out_folder, "f.dat"), f_series)
+    h5f = h5py.File(
+        os.path.join(args.out_folder, "output.h5"),
+        "w", driver="mpio", comm=comm)
+
+    dset_q = h5f.create_dataset("q", (num_series, dims[2]-1))
+    dset_f = h5f.create_dataset("f", (num_series, dims[2]-1))
+    dset_uz_centerline = h5f.create_dataset(
+        "uz_centerline", (num_series, dims[2]-1))
+    dset_u_mean = h5f.create_dataset("u_mean", (num_series, 3))
+
+    if num_series_proc > 0:
+        rows_proc = xrange(mpi_rank, num_series, mpi_size)
+        dset_q[rows_proc, :] = q_series[:, :]
+        dset_f[rows_proc, :] = f_series[:, :]
+        dset_uz_centerline[rows_proc, :] = uz_centerline_series[:, :]
+        dset_u_mean[rows_proc, :] = u_mean_series[:, :]
+
+    h5f.close()
+
+    # np.savetxt(os.path.join(args.out_folder, "u_mean.dat"),
+    #            u_mean_series)
+    # np.savetxt(os.path.join(args.out_folder, "uz_centerline.dat"),
+    #            uz_centerline_series)
+    # np.savetxt(os.path.join(args.out_folder, "q.dat"), q_series)
+    # np.savetxt(os.path.join(args.out_folder, "f.dat"), f_series)
 
 if __name__ == "__main__":
     main()
