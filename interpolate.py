@@ -116,11 +116,14 @@ class Interpolation:
         """ Update fields """
         self.stepstr = step
         with h5py.File(self.h5fu_str, "r") as h5fu:
+            if "VisualisationVector/"+self.stepstr not in h5fu:
+                return False
             self.u_data[:, :] = np.array(
                 h5fu.get("VisualisationVector/"+self.stepstr))
         for dim in xrange(3):
             df.info("Setting u[" + str(dim) + "]")
             self._set_val(self.u[dim], self.u_data[:, dim])
+        return True
 
     def probe(self):
         self.probes.clear()
@@ -151,7 +154,9 @@ def main():
         i_str = str(i)
 
         df.info("Step " + i_str)
-        interp.update(i_str)
+        success = interp.update(i_str)
+        if not success:
+            break
         interp.probe()
         interp.dump(add=args.add)
 
