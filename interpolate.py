@@ -34,15 +34,19 @@ def get_settings_serial():
 
 
 class Interpolation:
-    def __init__(self, filename_in, folder_out):
+    def __init__(self, mesh_in, filename_in, folder_out=None,
+                 p_filename_in=None):
         self.comm = mpi4py.MPI.COMM_WORLD
         self.mpi_rank = self.comm.Get_rank()
         self.mpi_size = self.comm.Get_size()
 
+        self.h5fmesh_str = mesh_in
         self.h5fu_str = filename_in
+        self.h5fp_str = p_filename_in
         self.folder_out = folder_out
 
-        if not os.path.exists(folder_out) and self.mpi_rank == 0:
+        if folder_out is not None and \
+           not os.path.exists(folder_out) and self.mpi_rank == 0:
             os.makedirs(folder_out)
 
         # Form compiler options
@@ -90,19 +94,24 @@ class Interpolation:
     def _load_mesh(self):
         """ Reads the mesh from the timeseries file """
         self.mesh = df.Mesh()
-        h5fmesh = df.HDF5File(self.mesh.mpi_comm(), self.h5fu_str, "r")
-        h5fmesh.read(self.mesh, "/Mesh/0", False)
+        h5fmesh = df.HDF5File(self.mesh.mpi_comm(), self.h5fmesh_str, "r")
+        h5fmesh.read(self.mesh, "/mesh", False)
         h5fmesh.close()
 
     def _initialize_geometry(self):
         """ Initialize from timeseries file """
         self._make_dof_coords()
         with h5py.File(self.h5fu_str, "r") as h5fu:
-            self.x_data = np.array(h5fu.get("Mesh/0/coordinates"))
+            self.x_data = np.array(h5fu.get("Mesh/0/mesh/geometry"))
         self._make_xdict(self.x_data)
         self.u = dict()
         for dim in xrange(3):
             self.u[dim] = df.Function(self.V)
+        if self.h5fp_str is not None:
+            self.p = df.Function(self.V)
+        self.u_data = np.zeros_like(self.x_data)
+        if self.h5fp_str is not None:
+            self.p_data = np.zeros((len(self.x_data), 1))
 
     def set_probes(self, ptsfilename):
         df.info("Reading probe points")
@@ -110,12 +119,16 @@ class Interpolation:
         with h5py.File(self.ptsfilename, "r") as h5fi:
             pts = np.array(h5fi["x"])
         self.probes = StatisticsProbes(pts.flatten(), self.V, True)
-        self.u_data = np.zeros_like(self.x_data)
 
     def update(self, step):
         """ Update fields """
-        self.stepstr = step
         with h5py.File(self.h5fu_str, "r") as h5fu:
+            if step == "-1" or step == -1:
+                steps = [int(key) for key in
+                         h5fu["VisualisationVector"]]
+                self.stepstr = str(np.max(steps))
+            else:
+                self.stepstr = step
             if "VisualisationVector/"+self.stepstr not in h5fu:
                 return False
             self.u_data[:, :] = np.array(
@@ -123,6 +136,14 @@ class Interpolation:
         for dim in xrange(3):
             df.info("Setting u[" + str(dim) + "]")
             self._set_val(self.u[dim], self.u_data[:, dim])
+        if self.h5fp_str is not None:
+            with h5py.File(self.h5fp_str, "r") as h5fp:
+                if "VisualisationVector/"+self.stepstr not in h5fp:
+                    return False
+                self.p_data[:] = np.array(
+                    h5fp.get("VisualisationVector/"+self.stepstr))
+                df.info("Setting p")
+                self._set_val(self.p, self.p_data[:])
         return True
 
     def probe(self):

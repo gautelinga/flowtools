@@ -80,6 +80,7 @@ def main():
     _, _, filenames = os.walk(args.u_folder).next()
     u_ids = []
     for filename in filenames:
+        print filename
         file_id = int(filename.split("_")[1].split(".")[0])
         u_ids.append(file_id)
 
