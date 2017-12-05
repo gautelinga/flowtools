@@ -77,8 +77,8 @@ class Interpolation:
 
         if self.compute_stress:
             df.info("Preparing to compute stresses")
-            self.Vv = df.VectorFunctionSpace(self.mesh, "DG", 0)
-            # self.Vv = df.VectorFunctionSpace(self.mesh, "CG", 1)
+            # self.Vv = df.VectorFunctionSpace(self.mesh, "DG", 0)
+            self.Vv = df.VectorFunctionSpace(self.mesh, "CG", 1)
             # self.V2 = df.FunctionSpace(self.mesh, "CG", 2)
             self.grad_u = dict()
             for dim in xrange(3):
@@ -148,7 +148,7 @@ class Interpolation:
             for dim in xrange(3):
                 self.probes_grad_u[dim] = StatisticsProbes(
                     pts.flatten(), self.Vv)
-                
+
     def update(self, step):
         """ Update fields """
         with h5py.File(self.h5fu_str, "r") as h5fu:
