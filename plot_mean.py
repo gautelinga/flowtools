@@ -57,6 +57,7 @@ if args.mode == "vorticity":
     u = np.zeros_like(data[0])
     for dset in data:
         u[:, :] += dset[:, :]/len(data)
+
 elif args.mode == "fluctuations":
     u_mean = np.zeros_like(data[0])
     u = np.zeros(len(data[0]))
