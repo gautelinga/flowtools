@@ -37,7 +37,7 @@ do_plot = not args.noplot
 N = len(coords)
 Nx = len(np.unique(coords[:, 0]))
 Ny = len(np.unique(coords[:, 1]))
-Nz = N/(Nx*Ny)
+Nz = N//(Nx*Ny)
 print(Nx, Ny, Nz)
 
 x = coords[:, 0].reshape((Nx, Ny, Nz))
