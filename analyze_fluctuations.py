@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import h5py
 import numpy as np
@@ -27,7 +28,7 @@ for filename in glob.glob(os.path.join(args.folder, "*.h5")):
 data = []
 for file_id in sorted(filenames.keys()):
     with h5py.File(filenames[file_id], "r") as h5f:
-        print "File:", file_id, "of", len(filenames)
+        print("File:", file_id, "of", len(filenames))
         u = np.array(h5f["u/"+str(file_id)])
         data.append(u)
 
@@ -37,7 +38,7 @@ N = len(coords)
 Nx = len(np.unique(coords[:, 0]))
 Ny = len(np.unique(coords[:, 1]))
 Nz = N/(Nx*Ny)
-print Nx, Ny, Nz
+print(Nx, Ny, Nz)
 
 x = coords[:, 0].reshape((Nx, Ny, Nz))
 y = coords[:, 1].reshape((Nx, Ny, Nz))
@@ -88,7 +89,7 @@ plt.imshow(du2_plane, aspect=1.)
 plt.colorbar()
 plt.savefig(os.path.join(args.folder, prefix + "2.png"))
 
-print "du2_mean =", du2.mean()
+print("du2_mean =", du2.mean())
 
 if do_plot:
     plt.show()
