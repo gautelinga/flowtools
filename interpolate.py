@@ -88,9 +88,9 @@ class Interpolation:
         my_first, my_last = dofmap.ownership_range()
         x = self.V.tabulate_dof_coordinates().reshape((-1, 3))
         unowned = dofmap.local_to_global_unowned()
-        dofs = filter(lambda dof: dofmap.local_to_global_index(dof)
-                      not in unowned,
-                      range(my_last-my_first))
+        dofs = list(filter(lambda dof: dofmap.local_to_global_index(dof)
+                           not in unowned,
+                           range(my_last-my_first)))
         self.x = x[dofs]
 
     def _make_xdict(self, x_data):
