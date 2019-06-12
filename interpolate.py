@@ -5,7 +5,6 @@ import numpy as np
 import dolfin as df
 import argparse
 import os
-import copy
 
 
 def get_settings():
@@ -81,7 +80,7 @@ class Interpolation:
             self.Vv = df.VectorFunctionSpace(self.mesh, "CG", 1)
             # self.V2 = df.FunctionSpace(self.mesh, "CG", 2)
             self.grad_u = dict()
-            for dim in xrange(3):
+            for dim in range(3):
                 self.grad_u[dim] = df.Function(self.Vv)
 
     def _make_dof_coords(self):
@@ -91,7 +90,7 @@ class Interpolation:
         unowned = dofmap.local_to_global_unowned()
         dofs = filter(lambda dof: dofmap.local_to_global_index(dof)
                       not in unowned,
-                      xrange(my_last-my_first))
+                      range(my_last-my_first))
         self.x = x[dofs]
 
     def _make_xdict(self, x_data):
@@ -124,7 +123,7 @@ class Interpolation:
             self.x_data = np.array(h5fu.get("Mesh/0/mesh/geometry"))
         self._make_xdict(self.x_data)
         self.u = dict()
-        for dim in xrange(3):
+        for dim in range(3):
             self.u[dim] = df.Function(self.V)
         if self.h5fp_str is not None:
             self.p = df.Function(self.V)
@@ -145,7 +144,7 @@ class Interpolation:
             self.probes_p = StatisticsProbes(pts.flatten(), self.V, False)
         if self.compute_stress:
             self.probes_grad_u = dict()
-            for dim in xrange(3):
+            for dim in range(3):
                 self.probes_grad_u[dim] = StatisticsProbes(
                     pts.flatten(), self.Vv)
 
@@ -162,7 +161,7 @@ class Interpolation:
                 return False
             self.u_data[:, :] = np.array(
                 h5fu.get("VisualisationVector/"+self.stepstr))
-        for dim in xrange(3):
+        for dim in range(3):
             df.info("Setting u[" + str(dim) + "]")
             self._set_val(self.u[dim], self.u_data[:, dim])
         if self.h5fp_str is not None:
@@ -174,7 +173,7 @@ class Interpolation:
                 df.info("Setting p")
                 self._set_val(self.p, self.p_data[:])
         if self.compute_stress:
-            for dim in xrange(3):
+            for dim in range(3):
                 df.info("Computing grad(u[" + str(dim) + "])")
                 # df.info(" --> step 1")
                 # u2 = df.project(self.u[dim], self.V2,
@@ -203,7 +202,7 @@ class Interpolation:
         if self.h5fp_str is not None:
             self.probes_p(self.p)
         if self.compute_stress:
-            for dim in xrange(3):
+            for dim in range(3):
                 self.probes_grad_u[dim](self.grad_u[dim])
 
     def dump(self, add=0):
@@ -212,7 +211,7 @@ class Interpolation:
             data_mat_p = self.probes_p.array(1)
         if self.compute_stress:
             data_mat_grad_u = dict()
-            for dim in xrange(3):
+            for dim in range(3):
                 data_mat_grad_u[dim] = self.probes_grad_u[dim].array(1)
         if add == 0:
             stepstrout = self.stepstr
