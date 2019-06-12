@@ -245,9 +245,10 @@ class Interpolation:
             dsets = [str(key) for key in sorted(list(dsets_u & dsets_p))]
         else:
             dsets = [str(key) for key in sorted(list(dsets_u))]
+        
         if id_last >= len(dsets):
-            id_last = len(dsets)-2
-        if id_first > id_last:
+            id_last = len(dsets)-1
+        if id_first > id_last and id_last != -1:
             id_first = id_last
         dsets_loc = dsets[id_first:id_last]
         dsets_loc.append(dsets[id_last])
