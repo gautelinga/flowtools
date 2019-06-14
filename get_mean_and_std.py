@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import h5py
 import numpy as np
@@ -14,10 +15,10 @@ data = np.loadtxt(args.file)
 t = data[:, 0]
 x = data[:, 1]
 
-print "Average:       ", x.mean()
-print "Standard dev.: ", x.std()
+print("Average:       ", x.mean())
+print("Standard dev.: ", x.std())
 
 if data.shape[1] > 2:
     y = data[:, 2]
-    print "Average2:      ", y.mean()
-    print "Standard dev.2:", y.std()
+    print("Average2:      ", y.mean())
+    print("Standard dev.2:", y.std())
